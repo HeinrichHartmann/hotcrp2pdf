@@ -1,0 +1,118 @@
+[
+  {
+    "object": "submission",
+    "pid": 1,
+    "title": "Building Resilient Microservices with Circuit Breakers",
+    "authors": [
+      {
+        "email": "alice@example.com",
+        "first": "Alice",
+        "last": "Johnson",
+        "affiliation": "TechCorp Inc.",
+        "contact": true
+      },
+      {
+        "email": "bob@example.com",
+        "first": "Bob",
+        "last": "Smith",
+        "affiliation": "TechCorp Inc.",
+        "contact": false
+      }
+    ],
+    "track_intent": "Platform",
+    "proposal_length": "30 minutes",
+    "long_description_program_committee": "This talk explores how to implement circuit breaker patterns in microservices architectures to improve system resilience. We'll cover practical examples using popular frameworks and demonstrate real-world failure scenarios.",
+    "session_outline": "1. Introduction to circuit breakers (5 min)\n2. Implementation patterns (15 min)\n3. Real-world case studies (8 min)\n4. Q&A (2 min)",
+    "audience_take_aways": "Attendees will learn how to implement circuit breakers, understand when to use them, and see practical examples of improving system resilience.",
+    "status": "accepted",
+    "submitted": true,
+    "submitted_at": 1703980800,
+    "modified_at": 1703980800,
+    "tags": [
+      {
+        "tag": "microservices",
+        "value": 1
+      },
+      {
+        "tag": "resilience",
+        "value": 1
+      }
+    ],
+    "other_notes_program_committee_chairs": "This is a timely topic for our audience."
+  },
+  {
+    "object": "submission",
+    "pid": 2,
+    "title": "Monitoring at Scale: Lessons from Managing 10k+ Services",
+    "authors": [
+      {
+        "email": "carol@megacorp.com",
+        "first": "Carol",
+        "last": "Davis",
+        "affiliation": "MegaCorp",
+        "contact": true
+      }
+    ],
+    "track_intent": "MLOps",
+    "proposal_length": "45 minutes",
+    "long_description_program_committee": "A deep dive into monitoring strategies for large-scale distributed systems. This talk covers metric collection, alerting strategies, and visualization techniques that have proven effective in production environments with thousands of services.",
+    "session_outline": "1. Scale challenges overview (10 min)\n2. Metric collection strategies (15 min)\n3. Alerting best practices (15 min)\n4. Visualization and dashboards (3 min)\n5. Q&A (2 min)",
+    "audience_take_aways": "Practical monitoring strategies, alerting patterns, and tooling recommendations for large-scale systems.",
+    "status": "under review",
+    "submitted": true,
+    "submitted_at": 1703894400,
+    "modified_at": 1703894400,
+    "tags": [
+      {
+        "tag": "monitoring",
+        "value": 1
+      },
+      {
+        "tag": "scale",
+        "value": 1
+      },
+      {
+        "tag": "observability",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "object": "submission",
+    "pid": 3,
+    "title": "Database Performance Tuning in Cloud Environments",
+    "authors": [
+      {
+        "email": "david@cloudprovider.com",
+        "first": "David",
+        "last": "Wilson",
+        "affiliation": "CloudProvider Co.",
+        "contact": true
+      }
+    ],
+    "track_intent": "DataOps",
+    "proposal_length": "30 minutes",
+    "long_description_program_committee": "This session covers database performance optimization techniques specific to cloud environments. Topics include auto-scaling considerations, network latency optimization, and cost-effective storage strategies.",
+    "session_outline": "1. Cloud database challenges (5 min)\n2. Performance optimization techniques (20 min)\n3. Cost considerations (3 min)\n4. Q&A (2 min)",
+    "audience_take_aways": "Attendees will learn cloud-specific database tuning techniques and cost optimization strategies.",
+    "status": "accepted",
+    "submitted": true,
+    "submitted_at": 1703808000,
+    "modified_at": 1703808000,
+    "tags": [
+      {
+        "tag": "database",
+        "value": 1
+      },
+      {
+        "tag": "performance",
+        "value": 1
+      },
+      {
+        "tag": "cloud",
+        "value": 1
+      }
+    ],
+    "other_notes_program_committee_chairs": "Great practical content for our database track."
+  }
+] 

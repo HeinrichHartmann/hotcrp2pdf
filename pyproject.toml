@@ -1,0 +1,18 @@
+[project]
+name = "hotcrp2pdf"
+version = "0.1.0"
+description = "Convert HotCRP talk submissions to PDF document"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "click>=8.0.0",
+    "jinja2>=3.0.0",
+    "dataclasses-json>=0.5.0",
+]
+
+[project.scripts]
+hotcrp2pdf = "hotcrp2pdf.main:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
