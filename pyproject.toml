@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.scripts]
-hotcrp2pdf = "hotcrp2pdf.main:cli"
+hotcrp2pdf = "hotcrp2pdf.__main__:cli"
 
 [build-system]
 requires = ["hatchling"]

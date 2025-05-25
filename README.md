@@ -34,17 +34,20 @@ Commands:
 
 ## Installation
 
-### Using Nix
+Ensure you have the required system dependencies `pandoc`, `texlive`. You can do so by running inside a nix shell:
 
 ```bash
-nix profile install github:your-username/hotcrp2pdf
+nix develop github:HeinrichHartmann/hotcrp2pdf --command zsh
 ```
 
-### Using uv (requires pandoc, texlive)
-
-First, ensure you have the required system dependencies `pandoc`, `texlive` then install via
+Next install the python tool via:
 
 ```bash
-uv tool install https://github.com/your-username/hotcrp2pdf
+uv tool install 'git+https://github.com/HeinrichHartmann/hotcrp2pdf.git'
 ```
 
+Now you should be able to use the tool like so:
+
+```
+hotcrp2pdf ./abstracts.txt abstracts.pdf
+```
