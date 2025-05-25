@@ -5,7 +5,7 @@ Convert HotCRP talk submissions to a PDF document.
 ## Synopsis
 
 ```bash
-Usage: python -m hotcrp2pdf [OPTIONS] COMMAND [ARGS]...
+Usage: hotcrp2pdf [OPTIONS] COMMAND [ARGS]...
 
   Convert HotCRP talk submissions to PDF document.
 
