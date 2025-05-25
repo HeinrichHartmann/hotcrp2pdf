@@ -6,6 +6,8 @@ import json
 import subprocess
 import tempfile
 import os
+import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import List, Optional, Tuple
 from .models import Talk
@@ -44,7 +46,6 @@ class HotCRPConverter:
             '-V', 'toccolor=blue',
             '-V', 'maxlistdepth=10'
         ]
-        self._create_blank_page()
     
     def _run_pandoc(self, input_file: Path, output_file: Path, extra_flags: List[str] = None) -> bool:
         """Run pandoc with standard flags and optional extra flags."""
@@ -101,7 +102,7 @@ class HotCRPConverter:
 """)
         # Use pdflatex directly instead of pandoc for the blank page
         cmd = ['pdflatex', '-interaction=nonstopmode', str(blank_tex)]
-        subprocess.run(cmd, cwd=str(self.tmp_dir))
+        subprocess.run(cmd, cwd=str(self.tmp_dir), check=True, capture_output=True)
         os.replace(str(blank_tex).replace('.tex', '.pdf'), str(blank_page))
         return blank_page
 
@@ -117,13 +118,13 @@ class HotCRPConverter:
                 # Add blank pages
                 temp_output = str(pdf_file) + '.tmp'
                 cmd = ['pdfunite', str(pdf_file), str(blank_page), temp_output]
-                subprocess.run(cmd, check=True)
+                subprocess.run(cmd, check=True, capture_output=True)
                 os.replace(temp_output, str(pdf_file))
             elif current_pages > target_pages:
                 # Truncate to target pages
                 temp_output = str(pdf_file) + '.tmp'
                 cmd = ['pdfjam', str(pdf_file), f'1-{target_pages}', '-o', temp_output]
-                subprocess.run(cmd, check=True)
+                subprocess.run(cmd, check=True, capture_output=True)
                 os.replace(temp_output, str(pdf_file))
             
             # Verify the final page count
@@ -178,8 +179,11 @@ class HotCRPConverter:
         talk_md = self.talks_dir / f"talk_{talk.pid}.md"
         talk_pdf = self.talks_dir / f"talk_{talk.pid}.pdf"
         
+        if talk_pdf.exists():
+            print(f"Using cached PDF for talk {talk.pid}")
+            return talk_pdf
+        
         with open(talk_md, 'w') as f:
-            f.write(f"{{#submission-{talk.pid}}}\n")
             f.write(talk.render_markdown(include_authors=include_authors))
         
         if self._run_pandoc(talk_md, talk_pdf):
@@ -227,20 +231,44 @@ class HotCRPConverter:
             if not toc_pdf:
                 return False
             
-            # Generate individual talk PDFs
-            print("Generating talk PDFs...")
+            # Generate individual talk PDFs in parallel
+            print("Generating talk PDFs in parallel...")
             talk_pdfs = []
-            for talk in talks:
-                print(f"Processing talk {talk.pid}...")
-                talk_pdf = self.generate_talk_pdf(talk, include_authors)
-                if talk_pdf:
-                    talk_pdfs.append(talk_pdf)
-                else:
-                    print(f"Warning: Failed to generate PDF for talk {talk.pid}")
+            failed_talks = []
+            
+            # Use ThreadPoolExecutor for parallel processing
+            with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+                # Submit all tasks
+                future_to_talk = {
+                    executor.submit(self.generate_talk_pdf, talk, include_authors): talk
+                    for talk in talks
+                }
+                
+                # Process results as they complete
+                for future in concurrent.futures.as_completed(future_to_talk):
+                    talk = future_to_talk[future]
+                    try:
+                        talk_pdf = future.result()
+                        if talk_pdf:
+                            talk_pdfs.append((talk.pid, talk_pdf))  # Store PID with PDF path
+                            print(f"✓ Generated PDF for talk {talk.pid}")
+                        else:
+                            failed_talks.append(talk.pid)
+                            print(f"✗ Failed to generate PDF for talk {talk.pid}")
+                    except Exception as e:
+                        failed_talks.append(talk.pid)
+                        print(f"✗ Error processing talk {talk.pid}: {e}")
+            
+            if failed_talks:
+                print(f"Warning: Failed to generate PDFs for {len(failed_talks)} talks: {failed_talks}")
+            
+            # Sort talk PDFs by PID before concatenating
+            talk_pdfs.sort(key=lambda x: x[0])  # Sort by PID
+            sorted_talk_pdfs = [pdf for _, pdf in talk_pdfs]  # Extract just the PDF paths
             
             # Concatenate all PDFs
             print("Concatenating PDFs...")
-            pdf_files = [str(title_pdf), str(toc_pdf)] + [str(p) for p in talk_pdfs]
+            pdf_files = [str(title_pdf), str(toc_pdf)] + [str(p) for p in sorted_talk_pdfs]
             cmd = ['pdfunite'] + pdf_files + [str(output_pdf)]
             
             try:
