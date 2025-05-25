@@ -50,5 +50,5 @@ uv tool install 'git+https://github.com/HeinrichHartmann/hotcrp2pdf.git'
 Now you should be able to use the tool like so:
 
 ```
-hotcrp2pdf ./abstracts.txt abstracts.pdf
+hotcrp2pdf convert-abstracts ./abstracts.txt abstracts.pdf
 ```
