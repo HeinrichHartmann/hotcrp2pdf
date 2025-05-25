@@ -34,7 +34,8 @@ Commands:
 
 ## Installation
 
-Ensure you have the required system dependencies `pandoc`, `texlive`. You can do so by running inside a nix shell:
+Ensure you have the required system dependencies `pandoc`, `texlive`, and `poppler_utils`.
+You can do so by running inside a nix shell:
 
 ```bash
 nix develop github:HeinrichHartmann/hotcrp2pdf --command zsh
