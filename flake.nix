@@ -17,7 +17,6 @@
             pkgs.texlive.combined.scheme-medium  # Includes xelatex, pdflatex, etc.
             pkgs.poppler_utils                   # For pdfunite
             pkgs.pdftk                           # Optional: another PDF concat tool
-            pkgs.uv
           ];
           shellHook = ''
             echo "Pandoc, LaTeX, and PDF tools are ready!"
