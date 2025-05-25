@@ -19,6 +19,10 @@
             pkgs.pdftk                           # Optional: another PDF concat tool
             pkgs.uv
           ];
+          shellHook = ''
+            echo "Pandoc, LaTeX, and PDF tools are ready!"
+            echo "Run 'uv tool install "git+https://github.com/HeinrichHartmann/hotcrp2pdf.git"' to make hotcrp2pdf available in your environment."
+          '';
         };
       }
     );
