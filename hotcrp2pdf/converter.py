@@ -209,76 +209,70 @@ class HotCRPConverter:
     def convert(self, json_file: Path, output_pdf: Path, 
                 include_authors: bool = True, title: str = "Talk Submissions") -> bool:
         """Convert HotCRP submissions JSON to PDF with specific page requirements."""
-        try:
-            # Load submissions
-            print(f"Loading submissions from {json_file}...")
-            talks = self.load_submissions(json_file)
-            print(f"Loaded {len(talks)} submissions")
+        # Load submissions
+        print(f"Loading submissions from {json_file}...")
+        talks = self.load_submissions(json_file)
+        print(f"Loaded {len(talks)} submissions")
+        
+        if not talks:
+            print("No valid submissions found")
+            return False
+        
+        # Generate title page
+        print("Generating title page...")
+        title_pdf = self.generate_title_page(title, len(talks))
+        if not title_pdf:
+            return False
+        
+        # Generate TOC
+        print("Generating table of contents...")
+        toc_pdf = self.generate_toc(talks)
+        if not toc_pdf:
+            return False
+        
+        # Generate individual talk PDFs in parallel
+        print("Generating talk PDFs in parallel...")
+        talk_pdfs = []
+        failed_talks = []
+        
+        # Use ThreadPoolExecutor for parallel processing
+        with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+            # Submit all tasks
+            future_to_talk = {
+                executor.submit(self.generate_talk_pdf, talk, include_authors): talk
+                for talk in talks
+            }
             
-            if not talks:
-                print("No valid submissions found")
-                return False
-            
-            # Generate title page
-            print("Generating title page...")
-            title_pdf = self.generate_title_page(title, len(talks))
-            if not title_pdf:
-                return False
-            
-            # Generate TOC
-            print("Generating table of contents...")
-            toc_pdf = self.generate_toc(talks)
-            if not toc_pdf:
-                return False
-            
-            # Generate individual talk PDFs in parallel
-            print("Generating talk PDFs in parallel...")
-            talk_pdfs = []
-            failed_talks = []
-            
-            # Use ThreadPoolExecutor for parallel processing
-            with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-                # Submit all tasks
-                future_to_talk = {
-                    executor.submit(self.generate_talk_pdf, talk, include_authors): talk
-                    for talk in talks
-                }
-                
-                # Process results as they complete
-                for future in concurrent.futures.as_completed(future_to_talk):
-                    talk = future_to_talk[future]
-                    try:
-                        talk_pdf = future.result()
-                        if talk_pdf:
-                            talk_pdfs.append((talk.pid, talk_pdf))  # Store PID with PDF path
-                            print(f"✓ Generated PDF for talk {talk.pid}")
-                        else:
-                            failed_talks.append(talk.pid)
-                            print(f"✗ Failed to generate PDF for talk {talk.pid}")
-                    except Exception as e:
+            # Process results as they complete
+            for future in concurrent.futures.as_completed(future_to_talk):
+                talk = future_to_talk[future]
+                try:
+                    talk_pdf = future.result()
+                    if talk_pdf:
+                        talk_pdfs.append((talk.pid, talk_pdf))  # Store PID with PDF path
+                        print(f"✓ Generated PDF for talk {talk.pid}")
+                    else:
                         failed_talks.append(talk.pid)
-                        print(f"✗ Error processing talk {talk.pid}: {e}")
-            
-            if failed_talks:
-                print(f"Warning: Failed to generate PDFs for {len(failed_talks)} talks: {failed_talks}")
-            
-            # Sort talk PDFs by PID before concatenating
-            talk_pdfs.sort(key=lambda x: x[0])  # Sort by PID
-            sorted_talk_pdfs = [pdf for _, pdf in talk_pdfs]  # Extract just the PDF paths
-            
-            # Concatenate all PDFs
-            print("Concatenating PDFs...")
-            pdf_files = [str(title_pdf), str(toc_pdf)] + [str(p) for p in sorted_talk_pdfs]
-            cmd = ['pdfunite'] + pdf_files + [str(output_pdf)]
-            
-            try:
-                subprocess.run(cmd, check=True)
-                print(f"Successfully created {output_pdf}")
-                return True
-            except subprocess.CalledProcessError as e:
-                print(f"Error concatenating PDFs: {e}")
-                return False
-            
-        except Exception as e:
-            print(f"Error during conversion: {e}")
-            return False 
+                        print(f"✗ Failed to generate PDF for talk {talk.pid}")
+                except Exception as e:
+                    failed_talks.append(talk.pid)
+                    print(f"✗ Error processing talk {talk.pid}: {e}")
+        
+        if failed_talks:
+            print(f"Warning: Failed to generate PDFs for {len(failed_talks)} talks: {failed_talks}")
+        
+        # Sort talk PDFs by PID before concatenating
+        talk_pdfs.sort(key=lambda x: x[0])  # Sort by PID
+        sorted_talk_pdfs = [pdf for _, pdf in talk_pdfs]  # Extract just the PDF paths
+        
+        # Concatenate all PDFs
+        print("Concatenating PDFs...")
+        pdf_files = [str(title_pdf), str(toc_pdf)] + [str(p) for p in sorted_talk_pdfs]
+        cmd = ['pdfunite'] + pdf_files + [str(output_pdf)]            
+        try:
+            subprocess.run(cmd, check=True)
+            print(f"Successfully created {output_pdf}")
+            return True
+        except subprocess.CalledProcessError as e:
+            print(f"Error concatenating PDFs: {e}")
+            return False

@@ -4,8 +4,20 @@ Main CLI interface for hotcrp2pdf
 
 import click
 import shutil
+import traceback
+import sys
 from pathlib import Path
 from .converter import HotCRPConverter, get_tmp_dir
+
+
+def show_exception(exc_type, exc_value, exc_traceback):
+    """Show full traceback for unhandled exceptions."""
+    traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
+    sys.exit(1)
+
+
+# Set custom exception handler
+sys.excepthook = show_exception
 
 
 @click.group()
