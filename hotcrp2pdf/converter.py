@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import List, Optional, Tuple
 from .models import Talk
-
+import re
 
 def get_tmp_dir() -> Path:
     """Get the default temporary directory following XDG Base Directory Specification."""
@@ -269,6 +269,107 @@ class HotCRPConverter:
         print("Concatenating PDFs...")
         pdf_files = [str(title_pdf), str(toc_pdf)] + [str(p) for p in sorted_talk_pdfs]
         cmd = ['pdfunite'] + pdf_files + [str(output_pdf)]            
+        try:
+            subprocess.run(cmd, check=True)
+            print(f"Successfully created {output_pdf}")
+            return True
+        except subprocess.CalledProcessError as e:
+            print(f"Error concatenating PDFs: {e}")
+            return False
+
+    def parse_abstracts(self, abstracts_file: Path) -> list:
+        """Parse abstracts.txt and return a list of Talk objects."""
+        with open(abstracts_file, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # Split on "Submission #N:" lines
+        submissions = re.split(r"\n(?=Submission #\d+:)", content)
+        talks = []
+        for submission in submissions:
+            if not submission.strip():
+                continue
+            # Extract pid and title
+            m = re.match(r"Submission #(\d+):\s*(.*)", submission)
+            if m:
+                pid = int(m.group(1))
+                title = m.group(2).strip()
+            else:
+                continue
+
+            def extract_section(name):
+                pat = rf"{name}\n[-]+\n(.*?)(?=\n[A-Z][^\n]*\n[-]+\n|\Z)"
+                m = re.search(pat, submission, re.DOTALL)
+                return m.group(1).strip() if m else ""
+
+            talk = Talk(
+                pid=pid,
+                title=title,
+                track_intent=extract_section("Track Intent"),
+                proposal_length=extract_section("Proposal Length"),
+                long_description_program_committee=extract_section("Long Description for the Program Committee"),
+                session_outline=extract_section("Session Outline"),
+                audience_take_aways=extract_section("Audience Take-Aways"),
+                other_notes_program_committee_chairs=extract_section("Other notes for the program committee or chairs"),
+                authors=[],  # No authors in this format
+                tags=[],
+            )
+            talks.append(talk)
+        return talks
+
+    def convert_from_talks(self, talks, output_pdf, include_authors=True, title="Talk Submissions"):
+        """Convert a list of Talk objects to PDF with specific page requirements."""
+        print(f"Loaded {len(talks)} submissions")
+        if not talks:
+            print("No valid submissions found")
+            return False
+
+        # Generate title page
+        print("Generating title page...")
+        title_pdf = self.generate_title_page(title, len(talks))
+        if not title_pdf:
+            return False
+
+        # Generate TOC
+        print("Generating table of contents...")
+        toc_pdf = self.generate_toc(talks)
+        if not toc_pdf:
+            return False
+
+        # Generate individual talk PDFs in parallel
+        print("Generating talk PDFs in parallel...")
+        talk_pdfs = []
+        failed_talks = []
+
+        with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+            future_to_talk = {
+                executor.submit(self.generate_talk_pdf, talk, include_authors): talk
+                for talk in talks
+            }
+            for future in concurrent.futures.as_completed(future_to_talk):
+                talk = future_to_talk[future]
+                try:
+                    talk_pdf = future.result()
+                    if talk_pdf:
+                        talk_pdfs.append((talk.pid, talk_pdf))
+                        print(f"✓ Generated PDF for talk {talk.pid}")
+                    else:
+                        failed_talks.append(talk.pid)
+                        print(f"✗ Failed to generate PDF for talk {talk.pid}")
+                except Exception as e:
+                    failed_talks.append(talk.pid)
+                    print(f"✗ Error processing talk {talk.pid}: {e}")
+
+        if failed_talks:
+            print(f"Warning: Failed to generate PDFs for {len(failed_talks)} talks: {failed_talks}")
+
+        # Sort talk PDFs by PID before concatenating
+        talk_pdfs.sort(key=lambda x: x[0])
+        sorted_talk_pdfs = [pdf for _, pdf in talk_pdfs]
+
+        # Concatenate all PDFs
+        print("Concatenating PDFs...")
+        pdf_files = [str(title_pdf), str(toc_pdf)] + [str(p) for p in sorted_talk_pdfs]
+        cmd = ['pdfunite'] + pdf_files + [str(output_pdf)]
         try:
             subprocess.run(cmd, check=True)
             print(f"Successfully created {output_pdf}")

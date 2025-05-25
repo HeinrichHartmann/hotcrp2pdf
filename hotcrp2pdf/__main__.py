@@ -92,5 +92,36 @@ def clear(ctx):
         click.echo(f"Temporary directory {tmp_dir} does not exist")
 
 
+@cli.command()
+@click.argument('abstracts_txt', type=click.Path(exists=True, path_type=Path))
+@click.argument('output_pdf', type=click.Path(path_type=Path))
+@click.option('--title', default='Talk Abstracts', help='Title for the document (default: "Talk Abstracts")')
+@click.pass_context
+def convert_abstracts(ctx, abstracts_txt: Path, output_pdf: Path, title: str):
+    """Convert abstracts.txt to PDF document."""
+    tmp_dir = ctx.obj['tmp_dir']
+    verbose = ctx.obj['verbose']
+
+    if verbose:
+        click.echo(f"Converting {abstracts_txt} to {output_pdf}")
+        if tmp_dir:
+            click.echo(f"Using temporary directory: {tmp_dir}")
+
+    converter = HotCRPConverter(tmp_dir=tmp_dir)
+    talks = converter.parse_abstracts(abstracts_txt)
+    # Reuse the rest of the pipeline
+    success = converter.convert_from_talks(
+        talks=talks,
+        output_pdf=output_pdf,
+        include_authors=False,
+        title=title
+    )
+
+    if success:
+        click.echo(f"✓ Successfully created {output_pdf}")
+    else:
+        click.echo("✗ Conversion failed", err=True)
+        raise click.Abort()
+
 if __name__ == "__main__":
     cli(obj={}) 
