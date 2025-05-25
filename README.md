@@ -5,16 +5,21 @@ Convert HotCRP talk submissions to a PDF document.
 ## Synopsis
 
 ```bash
-hotcrp2pdf submissions.json talks.pdf
-```
+Usage: python -m hotcrp2pdf [OPTIONS] COMMAND [ARGS]...
 
-- `submissions.json`: Path to the HotCRP submissions JSON file (required)
-- `output.pdf`: Path for the output PDF file (required)
-- `--cache-dir PATH`: Directory to store intermediate files (default: `$XDG_CACHE_HOME/hotcrp2pdf` or `~/.cache/hotcrp2pdf`)
-- `--no-authors`: Exclude author information from the PDF
-- `--title TEXT`: Custom title for the document (default: "Talk Submissions")
-- `--verbose, -v`: Enable verbose output
-- `--help`: Show help message
+  Convert HotCRP talk submissions to PDF document.
+
+Options:
+  --tmp-dir PATH  Directory to store temporary files (default:
+                  $XDG_RUNTIME_DIR/hotcrp2pdf or /tmp/hotcrp2pdf-{uid})
+  -v, --verbose   Enable verbose output
+  --help          Show this message and exit.
+
+Commands:
+  clear              Clear the temporary directory used by hotcrp2pdf.
+  convert            Convert HotCRP talk submissions to PDF document.
+  convert-abstracts  Convert abstracts.txt to PDF document.
+```
 
 ## Description
 
